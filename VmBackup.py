@@ -41,8 +41,8 @@ DEFAULT_BACKUP_DIR = '/snapshots/BACKUPS'
 # full export path:
 ## DEFAULT_BACKUP_DIR = '\snapshots\BACKUPS'
 # note - some NAS file servers may fail with the delimiter ':', so change to your desired format:
-BACKUP_DIR_PATTERN = '%s/backup-%04d-%02d-%02d-(%02d:%02d:%02d)'
-STATUS_LOG = '/snapshots/NAUbackup/status.log'
+BACKUP_DIR_PATTERN = '%s/backup-%04d-%02d-%02d-[%02d:%02d:%02d]'
+## STATUS_LOG = '/snapshots/NAUbackup/status.log'
 
 ############################# OPTIONAL
 # optional email may be triggered by configure next 3 parameters then find MAIL_ and uncommenting out the desired lines
@@ -354,22 +354,22 @@ def main(session):
         if config_specified:
             status_log_end(server_name, 'ERROR,%s' % summary)
             # note: optional email may be enabled by uncommenting out the next two lines
-            #send_email("%s 'ERROR VmBackup.py' %s" % (MAIL_TO_ADDR, STATUS_LOG))
-            #open('%s' % STATUS_LOG, 'w').close() # trunc status log after email
+            #send_email("%s 'ERROR VmBackup.py' %s" % (MAIL_TO_ADDR, config['log_dir']))
+            #open('%s' % config['log_dir'], 'w').close() # trunc status log after email
         log('VmBackup ended - **ERRORS DETECTED** - %s' % summary)
     elif (warning):
         if config_specified:
             status_log_end(server_name, 'WARNING,%s' % summary)
             # note: optional email may be enabled by uncommenting out the next two lines
-            #send_email("%s 'Warning VmBackup.py' %s" % (MAIL_TO_ADDR, STATUS_LOG))
-            #open('%s' % STATUS_LOG, 'w').close() # trunc status log after email
+            #send_email("%s 'Warning VmBackup.py' %s" % (MAIL_TO_ADDR, config['log_dir']))
+            #open('%s' % config['log_dir'], 'w').close() # trunc status log after email
         log('VmBackup ended - **Warning(s)** - %s' % summary)
     else:
         if config_specified:
             status_log_end(server_name, 'SUCCESS,%s' % summary)
             # note: optional email may be enabled by uncommenting out the next two lines
-            #send_email("%s 'Success VmBackup.py' %s" % (MAIL_TO_ADDR, STATUS_LOG))
-            #open('%s' % STATUS_LOG, 'w').close() # trunc status log after email
+            #send_email("%s 'Success VmBackup.py' %s" % (MAIL_TO_ADDR, config['log_dir']))
+            #open('%s' % config['log_dir'], 'w').close() # trunc status log after email
         log('VmBackup ended - Success - %s' % summary)
 
     # done with main()
@@ -550,6 +550,10 @@ def config_verify():
     if not os.path.exists(config['backup_dir']):
         print 'ERROR: config backup_dir does not exist -> %s' % config['backup_dir']
         return False
+        
+    if not os.path.exists(config['log_dir']):
+        print 'ERROR: config log_dir does not exist -> %s' % config['log_dir']
+        return False
 
     return True
 
@@ -585,6 +589,8 @@ def config_defaults():
         config['max_backups'] = str(DEFAULT_MAX_BACKUPS)
     if not 'backup_dir' in config.keys():
         config['backup_dir'] = str(DEFAULT_BACKUP_DIR)
+    if not 'log_dir' in config.keys():
+        config['log_dir'] = config['backup_dir']
 
 def config_print():
     log('VmBackup.py running with these settings:')
@@ -602,15 +608,15 @@ def config_print():
 
 def status_log_begin(server):
     rec_begin = '%s,vmbackup.py,%s,begin\n' % (fmtDateTime(), server)
-    open(STATUS_LOG,'a',0).write(rec_begin)
+    open(os.path.join(config['log_dir'],'vmbackup.log'),'a',0).write(rec_begin)
 
 def status_log_end(server, status):
     rec_end = '%s,vmbackup.py,%s,end,%s\n' % (fmtDateTime(), server, status)
-    open(STATUS_LOG,'a',0).write(rec_end)
+    open(os.path.join(config['log_dir'],'vmbackup.log'),'a',0).write(rec_end)
 
 def status_log_vm_export(server, status):
     rec_end = '%s,vm-export,%s,end,%s\n' % (fmtDateTime(), server, status)
-    open(STATUS_LOG,'a',0).write(rec_end)
+    open(os.path.join(config['log_dir'],'vmbackup.log'),'a',0).write(rec_end)
 
 def fmtDateTime():
     date = datetime.datetime.today()
